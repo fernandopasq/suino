@@ -1,0 +1,72 @@
+{% extends 'saude/base.html' %}
+
+{% block title %}Calendário Sanitário - Sistema Suíno{% endblock %}
+
+{% block extra_head %}
+<!-- FullCalendar CDN CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h1 class="fw-bold text-dark"><i class="bi bi-calendar-event text-success me-2"></i> Calendário Sanitário</h1>
+        <p class="text-muted mb-0">Acompanhe vacinas automáticas e remédios agendados para o seu plantel.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <select id="filtroAnimal" class="form-select shadow-sm">
+            <option value="">Todos os Animais</option>
+            {% for animal in animais %}
+                <option value="{{ animal.id }}">{{ animal.nome }} (#{{ animal.numero }})</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 p-4 bg-white">
+    <div id="calendar"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar CDN JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var selectAnimal = document.getElementById('filtroAnimal');
+
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'pt-br',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            events: function(fetchInfo, successCallback, failureCallback) {
+                var animalId = selectAnimal.value;
+                var url = "{% url 'saude:api_eventos' %}";
+                if (animalId) {
+                    url += "?animal_id=" + animalId;
+                }
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => successCallback(data))
+                    .catch(error => failureCallback(error));
+            },
+            eventClick: function(info) {
+                alert('Evento: ' + info.event.title + '\nTipo: ' + info.event.extendedProps.tipo + '\nStatus: ' + (info.event.extendedProps.realizado ? 'Realizado' : 'Pendente'));
+            }
+        });
+
+        calendar.render();
+
+        // Atualiza o calendário quando o filtro de animal mudar
+        selectAnimal.addEventListener('change', function() {
+            calendar.refetchEvents();
+        });
+    });
+</script>
+{% endblock %}

@@ -9,7 +9,7 @@ class Animal(models.Model):
         ('abatido', 'Abatido'),
         ('obito', 'Óbito'),
     ]
-    
+
     nome = models.CharField(max_length=100)
     numero = models.CharField(max_length=50, unique=True, verbose_name="Número / Brinco")
     data_nascimento = models.DateField()
@@ -25,6 +25,24 @@ class Animal(models.Model):
     @property
     def idade_meses(self):
         return self.idade_dias // 30
+
+    @property
+    def status_sanitario_atual(self):
+        # Se o status manual cadastrado for abatido ou óbito, respeita ele
+        if self.status in ['abatido', 'obito']:
+            return self.get_status_display()
+
+        hoje = date.today()
+        # Verifica se existe algum evento de vacina pendente com data prevista ultrapassada
+        try:
+            tem_pendencia = self.eventos.filter(tipo='vacina', realizado=False, data_prevista__lt=hoje).exists()
+            if tem_pendencia:
+                return "Pendente"
+        except Exception:
+            pass
+
+        # Caso contrário, retorna o status cadastrado (ex: "Em dia")
+        return self.get_status_display()
 
     def __str__(self):
         return f"{self.nome} (#{self.numero})"
@@ -47,6 +65,14 @@ class PlanoVacina(models.Model):
 
     def __str__(self):
         return f"{self.nome} (1ª dose com {self.idade_recomendada_dias} dias)"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            from .utils import gerar_eventos_vacinas_para_plano
+
+            gerar_eventos_vacinas_para_plano(self)
 
 
 class EventoSanitario(models.Model):

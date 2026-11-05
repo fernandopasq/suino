@@ -7,7 +7,8 @@
     <div class="col-12">
         <div class="p-4 bg-white rounded-4 shadow-sm border-0">
             <h1 class="fw-bold text-dark"><i class="bi bi-speedometer2 text-primary me-2"></i> Painel Principal</h1>
-            <p class="text-muted mb-0">Bem-vindo de volta, <strong>{{ user.username }}</strong>. Selecione abaixo o módulo que deseja gerenciar.</p>
+            <p class="text-muted mb-0">Bem-vindo de volta, <strong>{{ user.username }}</strong>. Selecione abaixo o
+                módulo que deseja gerenciar.</p>
         </div>
     </div>
 </div>
@@ -22,7 +23,8 @@
                         <i class="bi bi-piggy-bank fs-1"></i>
                     </div>
                     <h3 class="fw-bold text-dark">Gestão dos Porcos</h3>
-                    <p class="text-muted small">Visualize a lista completa dos animais cadastrados, acompanhe idades e status sanitários em tempo real.</p>
+                    <p class="text-muted small">Visualize a lista completa dos animais cadastrados, acompanhe idades e
+                        status sanitários em tempo real.</p>
                 </div>
                 <a href="{% url 'saude:lista_animais' %}" class="btn btn-primary w-100 fw-semibold mt-3 py-2 shadow-sm">
                     <i class="bi bi-list-ul me-1"></i> Acessar Gestão
@@ -40,9 +42,10 @@
                         <i class="bi bi-calendar-event fs-1"></i>
                     </div>
                     <h3 class="fw-bold text-dark">Calendário</h3>
-                    <p class="text-muted small">Acompanhe a agenda vertical de vacinas e remédios com filtros por animal e visualizações flexíveis.</p>
+                    <p class="text-muted small">Acompanhe a agenda vertical de vacinas e remédios com filtros por animal
+                        e visualizações flexíveis.</p>
                 </div>
-                <a href="#" class="btn btn-success w-100 fw-semibold mt-3 py-2 shadow-sm">
+                <a href="{% url 'saude:calendario' %}" class="btn btn-success w-100 fw-semibold mt-3 py-2 shadow-sm">
                     <i class="bi bi-calendar3 me-1"></i> Ver Calendário
                 </a>
             </div>
@@ -58,7 +61,8 @@
                         <i class="bi bi-person-badge fs-1"></i>
                     </div>
                     <h3 class="fw-bold text-dark">Meu Perfil</h3>
-                    <p class="text-muted small">Gerencie as informações da sua conta, altere sua senha de acesso e atualize seus dados cadastrais.</p>
+                    <p class="text-muted small">Gerencie as informações da sua conta, altere sua senha de acesso e
+                        atualize seus dados cadastrais.</p>
                 </div>
                 <a href="{% url 'saude:perfil' %}" class="btn btn-outline-secondary w-100 fw-semibold mt-3 py-2">
                     <i class="bi bi-gear me-1"></i> Configurações
