@@ -1,0 +1,80 @@
+{% extends 'saude/base.html' %}
+
+{% block title %}Gestão dos Porcos - Sistema Suíno{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold text-dark"><i class="bi bi-piggy-bank text-primary me-2"></i> Gestão de Animais</h1>
+        <p class="text-muted mb-0">Listagem geral do plantel e status sanitário atual.</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="ps-4">Animal</th>
+                        <th>Número / Brinco</th>
+                        <th>Idade</th>
+                        <th>Status Sanitário</th>
+                        <th class="text-end pe-4">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for animal in animais %}
+                    <tr>
+                        <td class="ps-4 py-3">
+                            <div class="d-flex align-items-center">
+                                {% if animal.foto %}
+                                    <img src="{{ animal.foto.url }}" alt="{{ animal.nome }}" class="rounded-circle me-3 object-fit-cover" width="40" height="40">
+                                {% else %}
+                                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-piggy-bank"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-dark">{{ animal.nome }}</h6>
+                                    <small class="text-muted">Nasc.: {{ animal.data_nascimento|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border px-2 py-1 font-monospace">#{{ animal.numero }}</span>
+                        </td>
+                        <td>
+                            {{ animal.idade_meses }} meses <small class="text-muted">({{ animal.idade_dias }} dias)</small>
+                        </td>
+                        <td>
+                            {% if animal.status_sanitario_atual == 'Em dia' %}
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle-fill me-1"></i> Em dia</span>
+                            {% elif animal.status_sanitario_atual == 'Pendente' %}
+                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill"><i class="bi bi-exclamation-triangle-fill me-1"></i> Pendente</span>
+                            {% elif animal.status_sanitario_atual == 'Abatido' %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 rounded-pill"><i class="bi bi-slash-circle me-1"></i> Abatido</span>
+                            {% else %}
+                                <span class="badge bg-dark bg-opacity-10 text-dark px-3 py-2 rounded-pill"><i class="bi bi-x-circle me-1"></i> Óbito</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="#" class="btn btn-sm btn-outline-primary" title="Ver Detalhes">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            Nenhum animal cadastrado no momento. Cadastre pelo Painel Administrativo.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
