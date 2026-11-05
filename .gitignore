@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
+# Django local data and generated files
+*.sqlite3
+*.sqlite3-journal
+media/
+staticfiles/
+
+# Logs, test and coverage artifacts
+*.log
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Packaging and build artifacts
+build/
+dist/
+*.egg-info/
+
+# IDE and operating system files
+.idea/
+.DS_Store
+Thumbs.db
