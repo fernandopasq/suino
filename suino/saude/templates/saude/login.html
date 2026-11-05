@@ -1,0 +1,39 @@
+{% extends 'saude/base.html' %}
+
+{% block title %}Login - Gestão Suíno{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-5">
+        <div class="card shadow border-0 rounded-4 p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-box-arrow-in-right text-primary fs-1"></i>
+                <h2 class="fw-bold mt-2">Acesso ao Sistema</h2>
+                <p class="text-muted">Entre com suas credenciais para continuar</p>
+            </div>
+
+            {% if form.errors %}
+                <div class="alert alert-danger py-2" role="alert">
+                    Usuário ou senha inválidos. Tente novamente.
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="id_username" class="form-label fw-semibold">Usuário</label>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required class="form-control" id="id_username" placeholder="Digite seu usuário">
+                </div>
+
+                <div class="mb-4">
+                    <label for="id_password" class="form-label fw-semibold">Senha</label>
+                    <input type="password" name="password" autocomplete="current-password" required class="form-control" id="id_password" placeholder="Digite sua senha">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">Entrar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
