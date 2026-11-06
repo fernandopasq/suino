@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'saude', # App de gestão dos porcos
+    'saude', # Aplicação Vettora para gestão sanitária animal
 ]
 
 MIDDLEWARE = [

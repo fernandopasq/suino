@@ -1,13 +1,27 @@
 {% extends 'saude/base.html' %}
 
-{% block title %}Gestão dos Porcos - Sistema Suíno{% endblock %}
+{% block title %}Gestão de Animais - Vettora{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="fw-bold text-dark"><i class="bi bi-piggy-bank text-primary me-2"></i> Gestão de Animais</h1>
+        <h1 class="fw-bold text-dark"><i class="bi bi-list-ul text-primary me-2"></i> Gestão de Animais</h1>
         <p class="text-muted mb-0">Listagem geral do plantel e status sanitário atual.</p>
     </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-4" aria-label="Filtrar animais por espécie">
+    <a href="{% url 'saude:lista_animais' %}"
+       class="btn {% if not especie_selecionada %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">
+        Todos
+    </a>
+    {% for especie in especies %}
+    <a href="{% url 'saude:lista_animais' %}?especie={{ especie.valor }}"
+       class="btn {% if especie_selecionada == especie.valor %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill">
+        <span aria-hidden="true">{{ especie.icone }}</span>
+        {{ especie.rotulo }}
+    </a>
+    {% endfor %}
 </div>
 
 <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
@@ -16,7 +30,7 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="ps-4">Animal</th>
+                        <th class="ps-4">Espécie</th>
                         <th>Número / Brinco</th>
                         <th>Idade</th>
                         <th>Status Sanitário</th>
@@ -28,21 +42,15 @@
                     <tr>
                         <td class="ps-4 py-3">
                             <div class="d-flex align-items-center">
-                                {% if animal.foto %}
-                                    <img src="{{ animal.foto.url }}" alt="{{ animal.nome }}" class="rounded-circle me-3 object-fit-cover" width="40" height="40">
-                                {% else %}
-                                    <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <i class="bi bi-piggy-bank"></i>
-                                    </div>
-                                {% endif %}
-                                <div>
-                                    <h6 class="fw-bold mb-0 text-dark">{{ animal.nome }}</h6>
-                                    <small class="text-muted">Nasc.: {{ animal.data_nascimento|date:"d/m/Y" }}</small>
+                                <div class="bg-secondary bg-opacity-10 text-secondary rounded-circle d-flex align-items-center justify-content-center me-3 fs-5" style="width: 40px; height: 40px;" aria-label="{{ animal.get_especie_display }}">
+                                    {{ animal.icone_especie }}
                                 </div>
+                                <h6 class="fw-bold mb-0 text-dark">{{ animal.get_especie_display }}</h6>
                             </div>
                         </td>
                         <td>
                             <span class="badge bg-light text-dark border px-2 py-1 font-monospace">#{{ animal.numero }}</span>
+                            <small class="text-muted d-block">Nasc.: {{ animal.data_nascimento|date:"d/m/Y" }}</small>
                         </td>
                         <td>
                             {{ animal.idade_meses }} meses <small class="text-muted">({{ animal.idade_dias }} dias)</small>

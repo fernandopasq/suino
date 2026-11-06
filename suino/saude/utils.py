@@ -3,14 +3,27 @@ from datetime import timedelta
 def _gerar_eventos_para_animal_e_plano(animal, plano):
     from .models import EventoSanitario
 
-    data_primeira_dose = animal.data_nascimento + timedelta(days=plano.idade_recomendada_dias)
+    data_dose = animal.data_nascimento + timedelta(days=plano.idade_primeira_dose_dias)
+    doses = [(1, data_dose)]
 
-    for dose in range(1, plano.quantidade_doses + 1):
-        dias_adicionais = (dose - 1) * plano.intervalo_doses_dias
-        data_prevista_dose = data_primeira_dose + timedelta(days=dias_adicionais)
+    for dose_adicional in plano.doses_adicionais.all():
+        data_dose += timedelta(days=dose_adicional.intervalo_dias)
+        doses.append((dose_adicional.numero, data_dose))
+
+    dose_numeros = [numero for numero, _ in doses]
+    eventos_pendentes = EventoSanitario.objects.filter(
+        animal=animal,
+        plano_vacina=plano,
+        realizado=False,
+        dose_numero__isnull=False,
+    )
+    if dose_numeros:
+        eventos_pendentes.exclude(dose_numero__in=dose_numeros).delete()
+
+    for dose, data_prevista_dose in doses:
         titulo_dose = f"{plano.nome} ({dose}ª Dose)"
 
-        EventoSanitario.objects.get_or_create(
+        evento, criado = EventoSanitario.objects.get_or_create(
             animal=animal,
             plano_vacina=plano,
             dose_numero=dose,
@@ -21,13 +34,17 @@ def _gerar_eventos_para_animal_e_plano(animal, plano):
                 'realizado': False,
             },
         )
+        if not criado and not evento.realizado:
+            evento.titulo = titulo_dose
+            evento.data_prevista = data_prevista_dose
+            evento.save(update_fields=('titulo', 'data_prevista'))
 
 
 def gerar_eventos_vacinas_para_animal(animal):
     """Gera os eventos de vacinação do animal com base nos planos cadastrados."""
     from .models import PlanoVacina
 
-    for plano in PlanoVacina.objects.all():
+    for plano in PlanoVacina.objects.filter(especie=animal.especie):
         _gerar_eventos_para_animal_e_plano(animal, plano)
 
 
@@ -35,5 +52,5 @@ def gerar_eventos_vacinas_para_plano(plano):
     """Gera os eventos de um novo plano para todos os animais existentes."""
     from .models import Animal
 
-    for animal in Animal.objects.all():
+    for animal in Animal.objects.filter(especie=plano.especie):
         _gerar_eventos_para_animal_e_plano(animal, plano)

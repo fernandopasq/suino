@@ -1,6 +1,13 @@
-# Suíno
+# Vettora
 
-Aplicação web desenvolvida com Django para gestão de suínos.
+Aplicação web desenvolvida com Django para gestão sanitária de animais de diferentes espécies.
+
+## Cadastro de vacinas
+
+No plano de vacinação, selecione a espécie e informe a idade da primeira dose em dias.
+Use **Adicionar outra dose** para incluir da 2ª até a 5ª dose e informe, em cada uma,
+quantos dias devem passar desde a dose anterior. A primeira dose é obrigatória; doses
+adicionais são opcionais e devem ser cadastradas em sequência.
 
 ## Preparar o ambiente
 
