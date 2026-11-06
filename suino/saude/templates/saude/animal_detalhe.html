@@ -1,0 +1,230 @@
+{% extends 'saude/base.html' %}
+
+{% block title %}{{ animal.get_especie_display }} #{{ animal.numero }} - Vettora{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <a href="{% url 'saude:lista_animais' %}" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i> Voltar para os animais
+        </a>
+        <div class="d-flex align-items-center gap-3 mt-2">
+            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center fs-2" style="width: 64px; height: 64px;" aria-hidden="true">
+                {{ animal.icone_especie }}
+            </div>
+            <div>
+                <h1 class="fw-bold text-dark mb-1">{{ animal.get_especie_display }} <span class="text-muted">#{{ animal.numero }}</span></h1>
+                <p class="text-muted mb-0">Ficha individual e histórico sanitário</p>
+            </div>
+        </div>
+    </div>
+    <a href="{% url 'saude:calendario' %}?animal_id={{ animal.id }}&amp;especie={{ animal.especie }}" class="btn btn-success">
+        <i class="bi bi-calendar-event me-1"></i> Abrir calendário deste animal
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Espécie</div>
+                <div class="fw-semibold"><span class="me-2">{{ animal.icone_especie }}</span>{{ animal.get_especie_display }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Número / Brinco</div>
+                <div class="fw-semibold font-monospace">#{{ animal.numero }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Nascimento e idade</div>
+                <div class="fw-semibold">{{ animal.data_nascimento|date:"d/m/Y" }}</div>
+                <small class="text-muted">{{ animal.idade_meses }} meses ({{ animal.idade_dias }} dias)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm rounded-4">
+            <div class="card-body">
+                <div class="text-muted small mb-1">Status sanitário atual</div>
+                {% if animal.status_sanitario_atual == 'Em dia' %}
+                    <span class="badge text-bg-success rounded-pill">{{ animal.status_sanitario_atual }}</span>
+                {% elif animal.status_sanitario_atual == 'Pendente' %}
+                    <span class="badge text-bg-warning rounded-pill">{{ animal.status_sanitario_atual }}</span>
+                {% elif animal.status == 'abatido' %}
+                    <span class="badge text-bg-secondary rounded-pill">{{ animal.status_sanitario_atual }}</span>
+                {% else %}
+                    <span class="badge text-bg-dark rounded-pill">{{ animal.status_sanitario_atual }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-0" id="animalTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="dados-tab" data-bs-toggle="tab" data-bs-target="#dados" type="button" role="tab" aria-controls="dados" aria-selected="true">
+            <i class="bi bi-info-circle me-1"></i> Dados e status
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="vacinas-tab" data-bs-toggle="tab" data-bs-target="#vacinas" type="button" role="tab" aria-controls="vacinas" aria-selected="false">
+            <i class="bi bi-shield-plus me-1"></i> Vacinas
+            <span class="badge text-bg-light ms-1">{{ vacinas|length }}</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="remedios-tab" data-bs-toggle="tab" data-bs-target="#remedios" type="button" role="tab" aria-controls="remedios" aria-selected="false">
+            <i class="bi bi-capsule me-1"></i> Remédios
+            <span class="badge text-bg-light ms-1">{{ remedios|length }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content card border-0 shadow-sm rounded-bottom-4 rounded-top-0">
+    <section class="tab-pane fade show active p-4" id="dados" role="tabpanel" aria-labelledby="dados-tab" tabindex="0">
+        <div class="row g-4">
+            <div class="col-lg-7">
+                <h2 class="h5 fw-bold mb-3">Informações do indivíduo</h2>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-normal">Espécie</dt>
+                    <dd class="col-sm-8">{{ animal.get_especie_display }}</dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Número / Brinco</dt>
+                    <dd class="col-sm-8 font-monospace">#{{ animal.numero }}</dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Data de nascimento</dt>
+                    <dd class="col-sm-8">{{ animal.data_nascimento|date:"d/m/Y" }}</dd>
+                    <dt class="col-sm-4 text-muted fw-normal">Idade</dt>
+                    <dd class="col-sm-8">{{ animal.idade_meses }} meses e {{ animal.idade_dias }} dias</dd>
+                </dl>
+            </div>
+            <div class="col-lg-5">
+                <div class="bg-light rounded-4 p-3 p-md-4">
+                    <h2 class="h5 fw-bold mb-2">Alterar status do animal</h2>
+                    <p class="small text-muted">Defina se o animal está ativo, foi abatido ou veio a óbito. Animais ativos têm a situação sanitária calculada automaticamente.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="acao" value="alterar_status">
+                        <label for="{{ status_form.status.id_for_label }}" class="form-label">{{ status_form.status.label }}</label>
+                        {{ status_form.status }}
+                        {% for error in status_form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-check2 me-1"></i> Salvar status
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="tab-pane fade p-4" id="vacinas" role="tabpanel" aria-labelledby="vacinas-tab" tabindex="0">
+        <div class="mb-3">
+            <h2 class="h5 fw-bold mb-1">Histórico de vacinas</h2>
+            <p class="text-muted small mb-0">Consulte as aplicações realizadas e registre as doses pendentes.</p>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for item in vacinas %}
+                {% with evento=item.evento %}
+                <div class="list-group-item px-0 py-3">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <h3 class="h6 fw-bold mb-0">{{ evento.titulo }}</h3>
+                                {% if evento.realizado %}
+                                    <span class="badge text-bg-success rounded-pill">Aplicada</span>
+                                {% else %}
+                                    <span class="badge text-bg-warning rounded-pill">Pendente</span>
+                                {% endif %}
+                            </div>
+                            {% if evento.dose_numero %}
+                                <div class="small text-muted">{{ evento.dose_numero }}ª dose</div>
+                            {% endif %}
+                            <div class="small text-muted">Prevista para {{ evento.data_prevista|date:"d/m/Y" }}</div>
+                            {% if evento.realizado and evento.data_realizada %}
+                                <div class="small text-success">Aplicada em {{ evento.data_realizada|date:"d/m/Y" }}</div>
+                            {% endif %}
+                            {% if evento.plano_vacina.descricao %}
+                                <div class="small text-muted mt-1">{{ evento.plano_vacina.descricao }}</div>
+                            {% endif %}
+                        </div>
+                        {% if not evento.realizado %}
+                        <form method="post" class="row g-2 align-items-end">
+                            {% csrf_token %}
+                            <input type="hidden" name="acao" value="registrar_vacina">
+                            <input type="hidden" name="evento_id" value="{{ evento.id }}">
+                            <div class="col-12 col-sm-auto">
+                                <label for="{{ item.form.data_realizada.id_for_label }}" class="form-label small mb-1">{{ item.form.data_realizada.label }}</label>
+                                {{ item.form.data_realizada }}
+                                {% for error in item.form.data_realizada.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-12 col-sm-auto">
+                                <button type="submit" class="btn btn-outline-success">
+                                    <i class="bi bi-check2-circle me-1"></i> Marcar aplicada
+                                </button>
+                            </div>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endwith %}
+            {% empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-shield-plus fs-1 d-block mb-2"></i>
+                    Nenhuma vacina cadastrada para este animal.
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="tab-pane fade p-4" id="remedios" role="tabpanel" aria-labelledby="remedios-tab" tabindex="0">
+        <div class="mb-3">
+            <h2 class="h5 fw-bold mb-1">Histórico de remédios e vermífugos</h2>
+            <p class="text-muted small mb-0">Eventos sanitários registrados para este indivíduo.</p>
+        </div>
+        <div class="list-group list-group-flush">
+            {% for evento in remedios %}
+                <div class="list-group-item px-0 py-3 d-flex justify-content-between gap-3">
+                    <div>
+                        <h3 class="h6 fw-bold mb-1">{{ evento.titulo }}</h3>
+                        <span class="small text-muted">Previsto para {{ evento.data_prevista|date:"d/m/Y" }}</span>
+                        {% if evento.realizado and evento.data_realizada %}
+                            <div class="small text-success">Realizado em {{ evento.data_realizada|date:"d/m/Y" }}</div>
+                        {% endif %}
+                    </div>
+                    {% if evento.realizado %}
+                        <span class="badge text-bg-success rounded-pill align-self-start">Realizado</span>
+                    {% else %}
+                        <span class="badge text-bg-warning rounded-pill align-self-start">Pendente</span>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-capsule fs-1 d-block mb-2"></i>
+                    Nenhum remédio ou vermífugo cadastrado para este animal.
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.location.hash === '#vacinas') {
+            bootstrap.Tab.getOrCreateInstance(document.getElementById('vacinas-tab')).show();
+        } else if (window.location.hash === '#remedios') {
+            bootstrap.Tab.getOrCreateInstance(document.getElementById('remedios-tab')).show();
+        }
+    });
+</script>
+{% endblock %}

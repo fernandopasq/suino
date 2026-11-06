@@ -9,6 +9,17 @@ Use **Adicionar outra dose** para incluir da 2ª até a 5ª dose e informe, em c
 quantos dias devem passar desde a dose anterior. A primeira dose é obrigatória; doses
 adicionais são opcionais e devem ser cadastradas em sequência.
 
+O status cadastral do animal é **Ativo**, **Abatido** ou **Óbito**. Para animais ativos,
+a situação sanitária (**Em dia** ou **Pendente**) é calculada automaticamente conforme
+as vacinas vencidas; animais abatidos ou com óbito não recebem essa classificação.
+
+## Ficha individual do animal
+
+Na gestão de animais, use o ícone de visualização para abrir a ficha individual.
+Ela reúne os dados do animal, o histórico de vacinas e remédios, permite registrar
+a data de aplicação de vacinas pendentes e alterar o status sanitário. O atalho para
+o calendário abre a agenda filtrada para aquele indivíduo.
+
 ## Preparar o ambiente
 
 Clone o repositório e entre na pasta do projeto:

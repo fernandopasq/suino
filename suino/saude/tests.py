@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -149,6 +149,246 @@ class CalendarioSanitarioTests(TestCase):
         self.assertContains(response, '#TESTE-GALINHA-FILTRO')
         self.assertNotContains(response, '#TESTE-SUINO-FILTRO')
         self.assertContains(response, '🐔')
+
+    def test_lista_abre_pagina_de_detalhes_do_individuo(self):
+        animal = Animal.objects.create(
+            especie='bovino',
+            numero='TESTE-DETALHE-LINK',
+            data_nascimento=date(2025, 1, 1),
+        )
+
+        response = self.client.get(reverse('saude:lista_animais'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+        )
+
+    def test_detalhes_exibem_informacoes_vacinas_e_remedios(self):
+        animal = Animal.objects.create(
+            especie='bovino',
+            numero='TESTE-DETALHES',
+            data_nascimento=date(2025, 1, 1),
+        )
+        EventoSanitario.objects.create(
+            animal=animal,
+            titulo='Vacina aplicada',
+            tipo='vacina',
+            data_prevista=date(2025, 2, 1),
+            realizado=True,
+            data_realizada=date(2025, 2, 2),
+        )
+        EventoSanitario.objects.create(
+            animal=animal,
+            titulo='Próxima vacina',
+            tipo='vacina',
+            data_prevista=date(2025, 3, 1),
+        )
+        EventoSanitario.objects.create(
+            animal=animal,
+            titulo='Vermífugo',
+            tipo='remedio',
+            data_prevista=date(2025, 4, 1),
+        )
+
+        response = self.client.get(reverse('saude:animal_detalhe', args=[animal.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Bovino #TESTE-DETALHES')
+        self.assertContains(response, 'Vacina aplicada')
+        self.assertContains(response, 'Aplicada em 02/02/2025')
+        self.assertContains(response, 'Próxima vacina')
+        self.assertContains(response, 'Marcar aplicada')
+        self.assertContains(response, 'Vermífugo')
+        self.assertContains(response, f'animal_id={animal.pk}')
+
+    def test_registra_aplicacao_de_vacina_com_data(self):
+        animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-APLICACAO',
+            data_nascimento=date(2025, 1, 1),
+        )
+        evento = EventoSanitario.objects.create(
+            animal=animal,
+            titulo='Vacina aplicada agora',
+            tipo='vacina',
+            data_prevista=date(2025, 2, 1),
+        )
+
+        response = self.client.post(
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+            {
+                'acao': 'registrar_vacina',
+                'evento_id': evento.pk,
+                f'aplicacao-{evento.pk}-data_realizada': '2025-02-03',
+            },
+        )
+
+        evento.refresh_from_db()
+        self.assertRedirects(
+            response,
+            f"{reverse('saude:animal_detalhe', args=[animal.pk])}#vacinas",
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(evento.realizado)
+        self.assertEqual(evento.data_realizada, date(2025, 2, 3))
+
+    def test_data_invalida_na_aplicacao_nao_marca_vacina(self):
+        animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-APLICACAO-INVALIDA',
+            data_nascimento=date(2025, 1, 1),
+        )
+        evento = EventoSanitario.objects.create(
+            animal=animal,
+            titulo='Vacina pendente',
+            tipo='vacina',
+            data_prevista=date(2025, 2, 1),
+        )
+
+        response = self.client.post(
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+            {
+                'acao': 'registrar_vacina',
+                'evento_id': evento.pk,
+                f'aplicacao-{evento.pk}-data_realizada': 'data-invalida',
+            },
+        )
+
+        evento.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(evento.realizado)
+        self.assertContains(response, 'Enter a valid date.')
+
+    def test_nao_permite_registrar_vacina_de_outro_animal(self):
+        animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-ANIMAL-PRINCIPAL',
+            data_nascimento=date(2025, 1, 1),
+        )
+        outro_animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-ANIMAL-OUTRO',
+            data_nascimento=date(2025, 1, 1),
+        )
+        evento = EventoSanitario.objects.create(
+            animal=outro_animal,
+            titulo='Vacina privada',
+            tipo='vacina',
+            data_prevista=date(2025, 2, 1),
+        )
+
+        response = self.client.post(
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+            {
+                'acao': 'registrar_vacina',
+                'evento_id': evento.pk,
+                f'aplicacao-{evento.pk}-data_realizada': '2025-02-03',
+            },
+        )
+
+        evento.refresh_from_db()
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(evento.realizado)
+
+    def test_altera_status_para_obito_ou_abatido(self):
+        animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-STATUS',
+            data_nascimento=date(2025, 1, 1),
+        )
+
+        response = self.client.post(
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+            {'acao': 'alterar_status', 'status': 'obito'},
+        )
+
+        animal.refresh_from_db()
+        self.assertRedirects(response, reverse('saude:animal_detalhe', args=[animal.pk]))
+        self.assertEqual(animal.status, 'obito')
+
+    def test_status_manual_so_permite_ativo_abatido_ou_obito(self):
+        animal = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-STATUS-CHOICES',
+            data_nascimento=date(2025, 1, 1),
+        )
+
+        self.assertEqual(
+            dict(Animal.STATUS_CHOICES),
+            {'ativo': 'Ativo', 'abatido': 'Abatido', 'obito': 'Óbito'},
+        )
+        self.assertEqual(animal.status, 'ativo')
+
+        response = self.client.post(
+            reverse('saude:animal_detalhe', args=[animal.pk]),
+            {'acao': 'alterar_status', 'status': 'pendente'},
+        )
+
+        animal.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(animal.status, 'ativo')
+        self.assertContains(response, 'Select a valid choice')
+
+    def test_situacao_sanitaria_e_calculada_para_animais_ativos(self):
+        ativo_sem_pendencias = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-ATIVO-EM-DIA',
+            data_nascimento=date(2025, 1, 1),
+        )
+        ativo_pendente = Animal.objects.create(
+            especie='suino',
+            numero='TESTE-ATIVO-PENDENTE',
+            data_nascimento=date(2025, 1, 1),
+        )
+        EventoSanitario.objects.create(
+            animal=ativo_pendente,
+            titulo='Vacina atrasada',
+            tipo='vacina',
+            data_prevista=date.today() - timedelta(days=1),
+        )
+
+        self.assertEqual(ativo_sem_pendencias.status_sanitario_atual, 'Em dia')
+        self.assertEqual(ativo_pendente.status_sanitario_atual, 'Pendente')
+
+    def test_animal_inativo_nao_recebe_situacao_pendente(self):
+        for status in ('abatido', 'obito'):
+            with self.subTest(status=status):
+                animal = Animal.objects.create(
+                    especie='suino',
+                    numero=f'TESTE-INATIVO-{status}',
+                    data_nascimento=date(2025, 1, 1),
+                    status=status,
+                )
+                EventoSanitario.objects.create(
+                    animal=animal,
+                    titulo='Vacina vencida',
+                    tipo='vacina',
+                    data_prevista=date(2025, 2, 1),
+                )
+
+                self.assertEqual(
+                    animal.status_sanitario_atual,
+                    animal.get_status_display(),
+                )
+
+    def test_calendario_abre_com_individuo_e_especie_selecionados(self):
+        animal = Animal.objects.create(
+            especie='galinha',
+            numero='TESTE-CALENDARIO-INDIVIDUO',
+            data_nascimento=date(2025, 1, 1),
+        )
+
+        response = self.client.get(
+            reverse('saude:calendario'),
+            {'animal_id': animal.pk, 'especie': 'suino'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['animal_selecionado'], animal)
+        self.assertEqual(response.context['especie_selecionada'], 'galinha')
+        self.assertContains(response, f'value="{animal.pk}" data-especie="galinha" selected')
 
     def test_pagina_do_calendario_carrega_fullcalendar(self):
         response = self.client.get(reverse('saude:calendario'))

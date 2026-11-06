@@ -67,7 +67,7 @@
                             {% endif %}
                         </td>
                         <td class="text-end pe-4">
-                            <a href="#" class="btn btn-sm btn-outline-primary" title="Ver Detalhes">
+                            <a href="{% url 'saude:animal_detalhe' animal.id %}" class="btn btn-sm btn-outline-primary" title="Ver detalhes de {{ animal }}">
                                 <i class="bi bi-eye"></i>
                             </a>
                         </td>

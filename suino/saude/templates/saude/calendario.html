@@ -18,16 +18,16 @@
         <select id="filtroAnimal" class="form-select shadow-sm">
             <option value="">Todos os animais</option>
             {% for animal in animais %}
-                <option value="{{ animal.id }}" data-especie="{{ animal.especie }}">{{ animal.get_especie_display }} (#{{ animal.numero }})</option>
+                <option value="{{ animal.id }}" data-especie="{{ animal.especie }}" {% if animal_selecionado.id == animal.id %}selected{% endif %}>{{ animal.get_especie_display }} (#{{ animal.numero }})</option>
             {% endfor %}
         </select>
     </div>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-4" aria-label="Filtrar calendário por espécie">
-    <button type="button" class="btn btn-primary rounded-pill filtro-especie" data-especie="">🐾 Todas as espécies</button>
+    <button type="button" class="btn {% if not especie_selecionada %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill filtro-especie" data-especie="">🐾 Todas as espécies</button>
     {% for especie in especies %}
-    <button type="button" class="btn btn-outline-primary rounded-pill filtro-especie" data-especie="{{ especie.valor }}">{{ especie.icone }} {{ especie.rotulo }}</button>
+    <button type="button" class="btn {% if especie_selecionada == especie.valor %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-pill filtro-especie" data-especie="{{ especie.valor }}">{{ especie.icone }} {{ especie.rotulo }}</button>
     {% endfor %}
 </div>
 
@@ -44,7 +44,11 @@
         var calendarEl = document.getElementById('calendar');
         var selectAnimal = document.getElementById('filtroAnimal');
         var botoesEspecie = document.querySelectorAll('.filtro-especie');
-        var especieSelecionada = '';
+        var especieSelecionada = document.querySelector('.filtro-especie.btn-primary').dataset.especie;
+
+        selectAnimal.querySelectorAll('option[data-especie]').forEach(function(opcao) {
+            opcao.hidden = Boolean(especieSelecionada && opcao.dataset.especie !== especieSelecionada);
+        });
 
         var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',

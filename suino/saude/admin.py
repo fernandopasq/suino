@@ -11,7 +11,7 @@ admin.site.index_title = "Gestão sanitária de animais"
 
 @admin.register(Animal)
 class AnimalAdmin(admin.ModelAdmin):
-    list_display = ('especie', 'numero', 'data_nascimento', 'idade_dias', 'status')
+    list_display = ('especie', 'numero', 'data_nascimento', 'idade_dias', 'status_sanitario_atual')
     search_fields = ('numero', 'especie')
     list_filter = ('especie', 'status')
 

@@ -25,8 +25,7 @@ ESPECIE_ICONES = {
 
 class Animal(models.Model):
     STATUS_CHOICES = [
-        ('em_dia', 'Em dia'),
-        ('pendente', 'Pendente'),
+        ('ativo', 'Ativo'),
         ('abatido', 'Abatido'),
         ('obito', 'Óbito'),
     ]
@@ -34,7 +33,7 @@ class Animal(models.Model):
     especie = models.CharField(max_length=20, choices=ESPECIE_CHOICES, verbose_name="Espécie")
     numero = models.CharField(max_length=50, unique=True, verbose_name="Número / Brinco")
     data_nascimento = models.DateField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='em_dia', verbose_name="Status de Saúde")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo', verbose_name="Status do Animal")
 
     @property
     def icone_especie(self):
@@ -52,21 +51,16 @@ class Animal(models.Model):
 
     @property
     def status_sanitario_atual(self):
-        # Se o status manual cadastrado for abatido ou óbito, respeita ele
-        if self.status in ['abatido', 'obito']:
+        if self.status != 'ativo':
             return self.get_status_display()
 
         hoje = date.today()
-        # Verifica se existe algum evento de vacina pendente com data prevista ultrapassada
-        try:
-            tem_pendencia = self.eventos.filter(tipo='vacina', realizado=False, data_prevista__lt=hoje).exists()
-            if tem_pendencia:
-                return "Pendente"
-        except Exception:
-            pass
-
-        # Caso contrário, retorna o status cadastrado (ex: "Em dia")
-        return self.get_status_display()
+        tem_pendencia = self.eventos.filter(
+            tipo='vacina',
+            realizado=False,
+            data_prevista__lt=hoje,
+        ).exists()
+        return "Pendente" if tem_pendencia else "Em dia"
 
     def __str__(self):
         return f"{self.get_especie_display()} (#{self.numero})"
