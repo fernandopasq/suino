@@ -3,6 +3,20 @@ from django import forms
 from .models import Animal
 
 
+class AnimalForm(forms.ModelForm):
+    class Meta:
+        model = Animal
+        fields = ('especie', 'numero', 'data_nascimento', 'status')
+        widgets = {
+            'especie': forms.Select(attrs={'class': 'form-select'}),
+            'numero': forms.TextInput(attrs={'class': 'form-control'}),
+            'data_nascimento': forms.DateInput(
+                attrs={'class': 'form-control', 'type': 'date'},
+            ),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+
 class StatusAnimalForm(forms.ModelForm):
     class Meta:
         model = Animal

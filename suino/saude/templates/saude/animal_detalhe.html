@@ -1,6 +1,6 @@
 {% extends 'saude/base.html' %}
 
-{% block title %}{{ animal.get_especie_display }} #{{ animal.numero }} - Vettora{% endblock %}
+{% block title %}{{ animal.get_especie_display }} {{ animal.identificador }} - Vettora{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
@@ -13,7 +13,7 @@
                 {{ animal.icone_especie }}
             </div>
             <div>
-                <h1 class="fw-bold text-dark mb-1">{{ animal.get_especie_display }} <span class="text-muted">#{{ animal.numero }}</span></h1>
+                <h1 class="fw-bold text-dark mb-1">{{ animal.get_especie_display }} <span class="text-muted">{{ animal.identificador }}</span></h1>
                 <p class="text-muted mb-0">Ficha individual e histórico sanitário</p>
             </div>
         </div>
@@ -36,7 +36,7 @@
         <div class="card h-100 border-0 shadow-sm rounded-4">
             <div class="card-body">
                 <div class="text-muted small mb-1">Número / Brinco</div>
-                <div class="fw-semibold font-monospace">#{{ animal.numero }}</div>
+                <div class="fw-semibold font-monospace">{{ animal.identificador }}</div>
             </div>
         </div>
     </div>
@@ -96,7 +96,7 @@
                     <dt class="col-sm-4 text-muted fw-normal">Espécie</dt>
                     <dd class="col-sm-8">{{ animal.get_especie_display }}</dd>
                     <dt class="col-sm-4 text-muted fw-normal">Número / Brinco</dt>
-                    <dd class="col-sm-8 font-monospace">#{{ animal.numero }}</dd>
+                    <dd class="col-sm-8 font-monospace">{{ animal.identificador }}</dd>
                     <dt class="col-sm-4 text-muted fw-normal">Data de nascimento</dt>
                     <dd class="col-sm-8">{{ animal.data_nascimento|date:"d/m/Y" }}</dd>
                     <dt class="col-sm-4 text-muted fw-normal">Idade</dt>
@@ -137,16 +137,23 @@
                         <div>
                             <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
                                 <h3 class="h6 fw-bold mb-0">{{ evento.titulo }}</h3>
-                                {% if evento.realizado %}
+                                {% if evento.status_vacina == 'Aplicada' %}
                                     <span class="badge text-bg-success rounded-pill">Aplicada</span>
-                                {% else %}
+                                {% elif evento.status_vacina == 'Pendente' %}
                                     <span class="badge text-bg-warning rounded-pill">Pendente</span>
+                                {% elif evento.status_vacina == 'Não aplicada' %}
+                                    <span class="badge text-bg-danger rounded-pill">Não aplicada</span>
+                                {% else %}
+                                    <span class="badge text-bg-info rounded-pill">Agendada</span>
                                 {% endif %}
                             </div>
                             {% if evento.dose_numero %}
                                 <div class="small text-muted">{{ evento.dose_numero }}ª dose</div>
                             {% endif %}
                             <div class="small text-muted">Prevista para {{ evento.data_prevista|date:"d/m/Y" }}</div>
+                            {% if not evento.realizado %}
+                                <div class="small text-muted">Janela até {{ evento.fim_janela_vacinacao|date:"d/m/Y" }}</div>
+                            {% endif %}
                             {% if evento.realizado and evento.data_realizada %}
                                 <div class="small text-success">Aplicada em {{ evento.data_realizada|date:"d/m/Y" }}</div>
                             {% endif %}

@@ -8,10 +8,21 @@ No plano de vacinação, selecione a espécie e informe a idade da primeira dose
 Use **Adicionar outra dose** para incluir da 2ª até a 5ª dose e informe, em cada uma,
 quantos dias devem passar desde a dose anterior. A primeira dose é obrigatória; doses
 adicionais são opcionais e devem ser cadastradas em sequência.
+O plano e cada dose adicional também permitem configurar quantos dias após a previsão
+a aplicação continua dentro da janela de vacinação (padrão: 7 dias).
 
 O status cadastral do animal é **Ativo**, **Abatido** ou **Óbito**. Para animais ativos,
 a situação sanitária (**Em dia** ou **Pendente**) é calculada automaticamente conforme
-as vacinas vencidas; animais abatidos ou com óbito não recebem essa classificação.
+as vacinas dentro da janela de aplicação; animais abatidos ou com óbito não recebem essa
+classificação. Na ficha, uma dose futura aparece como **Agendada**, uma dose dentro da
+janela como **Pendente** e uma dose cuja janela terminou sem aplicação como **Não aplicada**.
+Essa classificação considera a data prevista e o registro de aplicação de cada dose.
+Quando uma dose é aplicada, as doses seguintes são recalculadas a partir da data real da
+aplicação anterior, mesmo que ela tenha ocorrido após a janela prevista.
+
+Os indivíduos são identificados visualmente por um prefixo da espécie seguido do número
+cadastrado, como `s1` para suíno e `g1` para galináceo. O número pode se repetir entre
+espécies, mas deve ser único dentro da mesma espécie.
 
 ## Ficha individual do animal
 

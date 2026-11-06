@@ -8,6 +8,9 @@
         <h1 class="fw-bold text-dark"><i class="bi bi-list-ul text-primary me-2"></i> Gestão de Animais</h1>
         <p class="text-muted mb-0">Listagem geral do plantel e status sanitário atual.</p>
     </div>
+    <a href="{% url 'saude:animal_cadastrar' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Cadastrar
+    </a>
 </div>
 
 <div class="d-flex flex-wrap gap-2 mb-4" aria-label="Filtrar animais por espécie">
@@ -49,7 +52,7 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border px-2 py-1 font-monospace">#{{ animal.numero }}</span>
+                            <span class="badge bg-light text-dark border px-2 py-1 font-monospace">{{ animal.identificador }}</span>
                             <small class="text-muted d-block">Nasc.: {{ animal.data_nascimento|date:"d/m/Y" }}</small>
                         </td>
                         <td>
@@ -76,7 +79,7 @@
                     <tr>
                         <td colspan="5" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                            Nenhum animal cadastrado no momento. Cadastre pelo Painel Administrativo.
+                            Nenhum animal cadastrado no momento.
                         </td>
                     </tr>
                     {% endfor %}

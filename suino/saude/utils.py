@@ -3,14 +3,19 @@ from datetime import timedelta
 def _gerar_eventos_para_animal_e_plano(animal, plano):
     from .models import EventoSanitario
 
-    data_dose = animal.data_nascimento + timedelta(days=plano.idade_primeira_dose_dias)
-    doses = [(1, data_dose)]
-
-    for dose_adicional in plano.doses_adicionais.all():
-        data_dose += timedelta(days=dose_adicional.intervalo_dias)
-        doses.append((dose_adicional.numero, data_dose))
-
-    dose_numeros = [numero for numero, _ in doses]
+    dose_intervals = [(1, 0, plano.janela_primeira_dose_dias)] + [
+        (dose.numero, dose.intervalo_dias, dose.janela_dias)
+        for dose in plano.doses_adicionais.all()
+    ]
+    dose_numeros = [numero for numero, _, _ in dose_intervals]
+    eventos_existentes = {
+        evento.dose_numero: evento
+        for evento in EventoSanitario.objects.filter(
+            animal=animal,
+            plano_vacina=plano,
+            dose_numero__isnull=False,
+        )
+    }
     eventos_pendentes = EventoSanitario.objects.filter(
         animal=animal,
         plano_vacina=plano,
@@ -20,24 +25,42 @@ def _gerar_eventos_para_animal_e_plano(animal, plano):
     if dose_numeros:
         eventos_pendentes.exclude(dose_numero__in=dose_numeros).delete()
 
-    for dose, data_prevista_dose in doses:
-        titulo_dose = f"{plano.nome} ({dose}ª Dose)"
+    data_base = animal.data_nascimento + timedelta(days=plano.idade_primeira_dose_dias)
+    for dose, intervalo_dias, janela_dias in dose_intervals:
+        if dose > 1:
+            data_prevista_dose = data_base + timedelta(days=intervalo_dias)
+        else:
+            data_prevista_dose = data_base
 
-        evento, criado = EventoSanitario.objects.get_or_create(
-            animal=animal,
-            plano_vacina=plano,
-            dose_numero=dose,
-            defaults={
-                'titulo': titulo_dose,
-                'tipo': 'vacina',
-                'data_prevista': data_prevista_dose,
-                'realizado': False,
-            },
-        )
-        if not criado and not evento.realizado:
+        titulo_dose = f"{plano.nome} ({dose}ª Dose)"
+        evento = eventos_existentes.get(dose)
+        if evento is None:
+            evento = EventoSanitario.objects.create(
+                animal=animal,
+                plano_vacina=plano,
+                dose_numero=dose,
+                titulo=titulo_dose,
+                tipo='vacina',
+                data_prevista=data_prevista_dose,
+                janela_dias=janela_dias,
+                realizado=False,
+            )
+            eventos_existentes[dose] = evento
+        elif not evento.realizado:
             evento.titulo = titulo_dose
             evento.data_prevista = data_prevista_dose
-            evento.save(update_fields=('titulo', 'data_prevista'))
+            evento.janela_dias = janela_dias
+            evento.save(update_fields=('titulo', 'data_prevista', 'janela_dias'))
+
+        if evento.realizado and evento.data_realizada:
+            data_base = evento.data_realizada
+        else:
+            data_base = data_prevista_dose
+
+
+def recalcular_eventos_vacinas_para_animal_e_plano(animal, plano):
+    """Reagenda as doses futuras usando a data real das doses já aplicadas."""
+    _gerar_eventos_para_animal_e_plano(animal, plano)
 
 
 def gerar_eventos_vacinas_para_animal(animal):

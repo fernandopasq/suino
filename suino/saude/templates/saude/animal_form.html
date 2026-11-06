@@ -1,0 +1,54 @@
+{% extends 'saude/base.html' %}
+
+{% block title %}Cadastrar Animal - Vettora{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+        <div class="mb-4">
+            <a href="{% url 'saude:lista_animais' %}" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left me-1"></i> Voltar para gestão de animais
+            </a>
+            <h1 class="fw-bold text-dark mt-3">
+                <i class="bi bi-plus-circle text-primary me-2"></i> Cadastrar animal
+            </h1>
+            <p class="text-muted mb-0">Preencha os dados do novo indivíduo.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 p-md-5">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        {% for field in form %}
+                            <div class="col-md-6">
+                                <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 mt-4">
+                        <a href="{% url 'saude:lista_animais' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Salvar animal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

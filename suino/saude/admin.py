@@ -3,7 +3,10 @@ from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 
 from .models import Animal, DoseVacina, PlanoVacina, EventoSanitario
-from .utils import gerar_eventos_vacinas_para_plano
+from .utils import (
+    gerar_eventos_vacinas_para_plano,
+    recalcular_eventos_vacinas_para_animal_e_plano,
+)
 
 admin.site.site_header = "Vettora | Administração"
 admin.site.site_title = "Vettora"
@@ -11,7 +14,7 @@ admin.site.index_title = "Gestão sanitária de animais"
 
 @admin.register(Animal)
 class AnimalAdmin(admin.ModelAdmin):
-    list_display = ('especie', 'numero', 'data_nascimento', 'idade_dias', 'status_sanitario_atual')
+    list_display = ('identificador', 'especie', 'numero', 'data_nascimento', 'idade_dias', 'status_sanitario_atual')
     search_fields = ('numero', 'especie')
     list_filter = ('especie', 'status')
 
@@ -37,7 +40,7 @@ class DoseVacinaInlineFormSet(BaseInlineFormSet):
 class DoseVacinaInline(admin.TabularInline):
     model = DoseVacina
     formset = DoseVacinaInlineFormSet
-    fields = ('numero', 'intervalo_dias')
+    fields = ('numero', 'intervalo_dias', 'janela_dias')
     extra = 0
     max_num = 4
     verbose_name = "dose adicional"
@@ -46,7 +49,7 @@ class DoseVacinaInline(admin.TabularInline):
 
 @admin.register(PlanoVacina)
 class PlanoVacinaAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'especie', 'idade_primeira_dose_dias')
+    list_display = ('nome', 'especie', 'idade_primeira_dose_dias', 'janela_primeira_dose_dias')
     search_fields = ('nome',)
     list_filter = ('especie',)
     inlines = [DoseVacinaInline]
@@ -57,6 +60,11 @@ class PlanoVacinaAdmin(admin.ModelAdmin):
 
 @admin.register(EventoSanitario)
 class EventoSanitarioAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'animal', 'tipo', 'data_prevista', 'realizado', 'data_realizada')
+    list_display = ('titulo', 'animal', 'tipo', 'data_prevista', 'janela_dias', 'realizado', 'data_realizada')
     list_filter = ('tipo', 'animal__especie', 'realizado', 'data_prevista')
     search_fields = ('titulo', 'animal__numero', 'animal__especie')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.tipo == 'vacina' and obj.plano_vacina and obj.dose_numero is not None:
+            recalcular_eventos_vacinas_para_animal_e_plano(obj.animal, obj.plano_vacina)

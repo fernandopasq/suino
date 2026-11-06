@@ -1,10 +1,10 @@
 from django.db import models
-from datetime import date
+from datetime import date, timedelta
 from .utils import gerar_eventos_vacinas_para_animal
 
 ESPECIE_CHOICES = [
     ('suino', 'Suíno'),
-    ('galinha', 'Galinha'),
+    ('galinaceo', 'Galináceo'),
     ('bovino', 'Bovino'),
     ('ovino', 'Ovino'),
     ('caprino', 'Caprino'),
@@ -14,12 +14,22 @@ ESPECIE_CHOICES = [
 
 ESPECIE_ICONES = {
     'suino': '🐖',
-    'galinha': '🐔',
+    'galinaceo': '🐔',
     'bovino': '🐄',
     'ovino': '🐑',
     'caprino': '🐐',
     'equino': '🐎',
     'outro': '🐾',
+}
+
+ESPECIE_PREFIXOS = {
+    'suino': 's',
+    'galinaceo': 'g',
+    'bovino': 'b',
+    'ovino': 'o',
+    'caprino': 'c',
+    'equino': 'e',
+    'outro': 'x',
 }
 
 
@@ -31,13 +41,30 @@ class Animal(models.Model):
     ]
 
     especie = models.CharField(max_length=20, choices=ESPECIE_CHOICES, verbose_name="Espécie")
-    numero = models.CharField(max_length=50, unique=True, verbose_name="Número / Brinco")
+    numero = models.CharField(
+        max_length=50,
+        verbose_name="Número / Brinco",
+        help_text="O número deve ser único dentro da espécie.",
+    )
     data_nascimento = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ativo', verbose_name="Status do Animal")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('especie', 'numero'),
+                name='animal_numero_unico_por_especie',
+            ),
+        ]
 
     @property
     def icone_especie(self):
         return ESPECIE_ICONES.get(self.especie, '🐾')
+
+    @property
+    def identificador(self):
+        prefixo = ESPECIE_PREFIXOS.get(self.especie, 'x')
+        return f"{prefixo}{self.numero}"
 
     @property
     def idade_dias(self):
@@ -54,16 +81,17 @@ class Animal(models.Model):
         if self.status != 'ativo':
             return self.get_status_display()
 
-        hoje = date.today()
-        tem_pendencia = self.eventos.filter(
-            tipo='vacina',
-            realizado=False,
-            data_prevista__lt=hoje,
-        ).exists()
+        tem_pendencia = any(
+            evento.status_vacina == 'Pendente'
+            for evento in self.eventos.filter(
+                tipo='vacina',
+                realizado=False,
+            ).select_related('plano_vacina').order_by('plano_vacina_id', 'dose_numero')
+        )
         return "Pendente" if tem_pendencia else "Em dia"
 
     def __str__(self):
-        return f"{self.get_especie_display()} (#{self.numero})"
+        return f"{self.get_especie_display()} ({self.identificador})"
 
     def save(self, *args, **kwargs):
         is_new = self.pk is None
@@ -80,6 +108,10 @@ class PlanoVacina(models.Model):
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição / Observações")
     idade_primeira_dose_dias = models.PositiveIntegerField(
         verbose_name="Idade para a 1ª dose (em dias)",
+    )
+    janela_primeira_dose_dias = models.PositiveIntegerField(
+        default=7,
+        verbose_name="Janela para a 1ª dose (dias após a previsão)",
     )
 
     def __str__(self):
@@ -107,6 +139,10 @@ class DoseVacina(models.Model):
     )
     intervalo_dias = models.PositiveIntegerField(
         verbose_name="Intervalo desde a dose anterior (em dias)",
+    )
+    janela_dias = models.PositiveIntegerField(
+        default=7,
+        verbose_name="Janela de aplicação (dias após a previsão)",
     )
 
     class Meta:
@@ -155,12 +191,32 @@ class EventoSanitario(models.Model):
     titulo = models.CharField(max_length=150, verbose_name="Título / Descrição")
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES, default='vacina', verbose_name="Tipo")
     data_prevista = models.DateField(verbose_name="Data Prevista")
+    janela_dias = models.PositiveIntegerField(
+        default=7,
+        verbose_name="Janela de aplicação (dias após a previsão)",
+    )
     realizado = models.BooleanField(default=False, verbose_name="Realizado?")
     data_realizada = models.DateField(blank=True, null=True, verbose_name="Data Realizada")
 
     # Referência opcional caso tenha vindo do plano automático
     plano_vacina = models.ForeignKey(PlanoVacina, on_delete=models.SET_NULL, blank=True, null=True, related_name='eventos_gerados')
     dose_numero = models.IntegerField(blank=True, null=True, verbose_name="Número da Dose")
+
+    @property
+    def status_vacina(self):
+        if self.realizado:
+            return "Aplicada"
+
+        hoje = date.today()
+        if hoje < self.data_prevista:
+            return "Agendada"
+        if hoje <= self.fim_janela_vacinacao:
+            return "Pendente"
+        return "Não aplicada"
+
+    @property
+    def fim_janela_vacinacao(self):
+        return self.data_prevista + timedelta(days=self.janela_dias)
 
     def __str__(self):
         status_str = "Realizado" if self.realizado else "Pendente"

@@ -18,7 +18,7 @@
         <select id="filtroAnimal" class="form-select shadow-sm">
             <option value="">Todos os animais</option>
             {% for animal in animais %}
-                <option value="{{ animal.id }}" data-especie="{{ animal.especie }}" {% if animal_selecionado.id == animal.id %}selected{% endif %}>{{ animal.get_especie_display }} (#{{ animal.numero }})</option>
+                <option value="{{ animal.id }}" data-especie="{{ animal.especie }}" {% if animal_selecionado.id == animal.id %}selected{% endif %}>{{ animal.get_especie_display }} ({{ animal.identificador }})</option>
             {% endfor %}
         </select>
     </div>

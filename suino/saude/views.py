@@ -1,11 +1,12 @@
 from django.shortcuts import get_object_or_404, redirect, render, reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 
 from .models import Animal, ESPECIE_CHOICES, ESPECIE_ICONES, EventoSanitario
-from .forms import AplicacaoVacinaForm, StatusAnimalForm
+from .forms import AnimalForm, AplicacaoVacinaForm, StatusAnimalForm
 
 @login_required
 def home_view(request):
@@ -32,6 +33,17 @@ def lista_animais_view(request):
         'especie_selecionada': especie,
     }
     return render(request, 'saude/lista_animais.html', context)
+
+
+@login_required
+def animal_cadastrar_view(request):
+    form = AnimalForm(request.POST if request.method == 'POST' else None)
+    if request.method == 'POST' and form.is_valid():
+        animal = form.save()
+        messages.success(request, f"Animal {animal.identificador} cadastrado com sucesso.")
+        return redirect('saude:lista_animais')
+
+    return render(request, 'saude/animal_form.html', {'form': form})
 
 
 @login_required
@@ -66,9 +78,18 @@ def animal_detalhe_view(request, animal_id):
             aplicacao_form = AplicacaoVacinaForm(request.POST, evento_id=evento.pk)
             evento_form_id = evento.pk
             if aplicacao_form.is_valid():
-                evento.realizado = True
-                evento.data_realizada = aplicacao_form.cleaned_data['data_realizada']
-                evento.save(update_fields=('realizado', 'data_realizada'))
+                with transaction.atomic():
+                    evento.realizado = True
+                    evento.data_realizada = aplicacao_form.cleaned_data['data_realizada']
+                    evento.save(update_fields=('realizado', 'data_realizada'))
+
+                    if evento.plano_vacina and evento.dose_numero is not None:
+                        from .utils import recalcular_eventos_vacinas_para_animal_e_plano
+
+                        recalcular_eventos_vacinas_para_animal_e_plano(
+                            animal,
+                            evento.plano_vacina,
+                        )
                 messages.success(request, f"A aplicação de “{evento.titulo}” foi registrada.")
                 return redirect(f"{reverse('saude:animal_detalhe', args=[animal.pk])}#vacinas")
         else:
@@ -127,7 +148,7 @@ def api_eventos_json(request):
 
         lista_eventos.append({
             'id': ev.id,
-            'title': f"#{ev.animal.numero}: {ev.titulo}",
+            'title': f"{ev.animal.identificador}: {ev.titulo}",
             'start': ev.data_prevista.strftime('%Y-%m-%d'),
             'color': cor,
             'extendedProps': {
