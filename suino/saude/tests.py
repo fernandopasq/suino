@@ -8,6 +8,101 @@ from django.urls import reverse
 from .models import Animal, DoseVacina, EventoSanitario, PlanoVacina
 
 
+class PerfilTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='usuario-perfil',
+            password='senha-atual-123',
+        )
+        self.client.force_login(self.user)
+
+    def test_perfil_exibe_formulario_colapsavel_de_troca_de_senha(self):
+        response = self.client.get(reverse('saude:perfil'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Não informado')
+        self.assertContains(response, 'name="first_name"')
+        self.assertContains(response, 'name="last_name"')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'Trocar senha')
+        self.assertContains(response, 'data-bs-toggle="collapse"')
+        self.assertContains(response, 'name="old_password"')
+        self.assertContains(response, 'name="new_password1"')
+        self.assertContains(response, 'name="new_password2"')
+
+    def test_atualizar_informacoes_do_perfil(self):
+        response = self.client.post(
+            reverse('saude:perfil'),
+            {
+                'acao': 'atualizar_perfil',
+                'first_name': 'Ana',
+                'last_name': 'Silva',
+                'email': 'ana@example.com',
+            },
+            follow=True,
+        )
+
+        self.user.refresh_from_db()
+        self.assertRedirects(response, reverse('saude:perfil'))
+        self.assertEqual(self.user.first_name, 'Ana')
+        self.assertEqual(self.user.last_name, 'Silva')
+        self.assertEqual(self.user.email, 'ana@example.com')
+        self.assertContains(response, 'Seus dados de perfil foram atualizados.')
+        self.assertContains(response, 'ana@example.com')
+
+    def test_email_invalido_mantem_formulario_aberto_e_exibe_erro(self):
+        response = self.client.post(
+            reverse('saude:perfil'),
+            {
+                'acao': 'atualizar_perfil',
+                'first_name': 'Ana',
+                'last_name': 'Silva',
+                'email': 'email-invalido',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="collapse show mt-3"')
+        self.assertContains(response, 'Informe um endereço de e-mail válido.')
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, '')
+
+    def test_troca_senha_exibe_feedback_e_mantem_usuario_logado(self):
+        response = self.client.post(
+            reverse('saude:perfil'),
+            {
+                'acao': 'alterar_senha',
+                'old_password': 'senha-atual-123',
+                'new_password1': 'Nova-senha-segura-948!',
+                'new_password2': 'Nova-senha-segura-948!',
+            },
+            follow=True,
+        )
+
+        self.user.refresh_from_db()
+        self.assertRedirects(response, reverse('saude:perfil'))
+        self.assertTrue(self.user.check_password('Nova-senha-segura-948!'))
+        self.assertTrue(response.context['user'].is_authenticated)
+        self.assertContains(response, 'Sua senha foi alterada com sucesso.')
+
+    def test_troca_senha_invalida_mantem_formulario_aberto_e_exibe_erros(self):
+        response = self.client.post(
+            reverse('saude:perfil'),
+            {
+                'acao': 'alterar_senha',
+                'old_password': 'senha-incorreta',
+                'new_password1': 'Nova-senha-segura-948!',
+                'new_password2': 'Nova-senha-segura-948!',
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="collapse show mt-3"')
+        self.assertContains(response, 'A senha atual está incorreta.')
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('senha-atual-123'))
+
+
 class CalendarioSanitarioTests(TestCase):
     def setUp(self):
         user = get_user_model().objects.create_user(username='teste', password='senha-teste')

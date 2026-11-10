@@ -3,7 +3,112 @@
 {% block content %}
 <div class="card shadow-sm border-0 p-4">
     <h2 class="fw-bold">Meu Perfil</h2>
-    <p class="text-muted">Usuário: {{ user.username }}</p>
-    <p class="text-muted">E-mail: {{ user.email|default:"Não cadastrado" }}</p>
+    <div class="row g-3 mt-1">
+        <div class="col-md-6">
+            <div class="text-muted small">Usuário</div>
+            <div class="fw-semibold">{{ user.username }}</div>
+        </div>
+        <div class="col-md-6">
+            <div class="text-muted small">Nome</div>
+            <div class="fw-semibold">{{ user.first_name|default:"Não informado" }}</div>
+        </div>
+        <div class="col-md-6">
+            <div class="text-muted small">Sobrenome</div>
+            <div class="fw-semibold">{{ user.last_name|default:"Não informado" }}</div>
+        </div>
+        <div class="col-md-6">
+            <div class="text-muted small">E-mail</div>
+            <div class="fw-semibold">{{ user.email|default:"Não informado" }}</div>
+        </div>
+    </div>
+
+    <p class="text-muted mt-3 mb-0">
+        Complete seus dados quando quiser. Nome, sobrenome e e-mail são opcionais.
+    </p>
+
+    <div class="mt-3">
+        <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#formulario-editar-perfil"
+            aria-expanded="{{ mostrar_formulario_perfil|yesno:'true,false' }}"
+            aria-controls="formulario-editar-perfil"
+        >
+            <i class="bi bi-person-gear me-1"></i> Editar informações
+        </button>
+
+        <div class="collapse{% if mostrar_formulario_perfil %} show{% endif %} mt-3" id="formulario-editar-perfil">
+            <div class="card card-body bg-light border-0">
+                <h3 class="h5">Suas informações</h3>
+                <form method="post" action="{% url 'saude:perfil' %}">
+                    {% csrf_token %}
+                    {% for field in form_perfil %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small" role="alert">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div>
+                        <button class="btn btn-primary" type="submit" name="acao" value="atualizar_perfil">
+                            <i class="bi bi-check-circle me-1"></i> Salvar informações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="mt-3">
+        <button
+            class="btn btn-outline-primary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#formulario-alterar-senha"
+            aria-expanded="{{ mostrar_formulario_senha|yesno:'true,false' }}"
+            aria-controls="formulario-alterar-senha"
+        >
+            <i class="bi bi-key me-1"></i> Trocar senha
+        </button>
+
+        <div class="collapse{% if mostrar_formulario_senha %} show{% endif %} mt-3" id="formulario-alterar-senha">
+            <div class="card card-body bg-light border-0">
+                <h3 class="h5">Alterar senha</h3>
+                <form method="post" action="{% url 'saude:perfil' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="acao" value="alterar_senha">
+                    {% if form_senha.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ form_senha.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    {% for field in form_senha %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small" role="alert">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-check-circle me-1"></i> Salvar nova senha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

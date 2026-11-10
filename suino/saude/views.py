@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, redirect, render, reverse
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
@@ -6,7 +7,7 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 
 from .models import Animal, ESPECIE_CHOICES, ESPECIE_ICONES, EventoSanitario
-from .forms import AnimalForm, AplicacaoVacinaForm, StatusAnimalForm
+from .forms import AlterarSenhaForm, AnimalForm, AplicacaoVacinaForm, PerfilForm, StatusAnimalForm
 
 @login_required
 def home_view(request):
@@ -14,7 +15,37 @@ def home_view(request):
 
 @login_required
 def perfil_view(request):
-    return render(request, 'saude/perfil.html')
+    perfil_form = PerfilForm(instance=request.user)
+    senha_form = AlterarSenhaForm(request.user)
+    mostrar_formulario_perfil = False
+    mostrar_formulario_senha = False
+
+    if request.method == 'POST':
+        acao = request.POST.get('acao')
+        if acao == 'atualizar_perfil':
+            mostrar_formulario_perfil = True
+            perfil_form = PerfilForm(request.POST, instance=request.user)
+            if perfil_form.is_valid():
+                perfil_form.save()
+                messages.success(request, "Seus dados de perfil foram atualizados.")
+                return redirect('saude:perfil')
+        elif acao == 'alterar_senha':
+            mostrar_formulario_senha = True
+            senha_form = AlterarSenhaForm(request.user, request.POST)
+            if senha_form.is_valid():
+                senha_form.save()
+                update_session_auth_hash(request, request.user)
+                messages.success(request, "Sua senha foi alterada com sucesso.")
+                return redirect('saude:perfil')
+        else:
+            return HttpResponseBadRequest("Ação de perfil inválida.")
+
+    return render(request, 'saude/perfil.html', {
+        'form_perfil': perfil_form,
+        'form_senha': senha_form,
+        'mostrar_formulario_perfil': mostrar_formulario_perfil,
+        'mostrar_formulario_senha': mostrar_formulario_senha,
+    })
 
 @login_required
 def lista_animais_view(request):
