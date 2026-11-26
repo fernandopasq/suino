@@ -2,6 +2,57 @@
 
 Aplicação web desenvolvida com Django para gestão sanitária de animais de diferentes espécies.
 
+## Estrutura do projeto
+
+```text
+SUINO/
+├── README.md                     # Informações gerais e instruções do projeto
+├── requirements.txt              # Dependências Python utilizadas pela aplicação
+└── suino/
+    ├── manage.py                 # Comandos administrativos do Django
+    ├── db.sqlite3                # Banco de dados local SQLite
+    ├── media/                    # Arquivos enviados pela aplicação
+    │   └── animais/              # Imagens dos animais
+    ├── saude/                    # Aplicação principal de gestão sanitária
+    │   ├── migrations/           # Histórico das alterações no banco de dados
+    │   ├── templates/saude/      # Páginas HTML do sistema
+    │   │   ├── base.html         # Estrutura visual compartilhada
+    │   │   ├── home.html         # Página inicial
+    │   │   ├── login.html        # Página de acesso
+    │   │   ├── perfil.html       # Dados e senha do usuário
+    │   │   ├── lista_animais.html
+    │   │   ├── animal_form.html
+    │   │   ├── animal_detalhe.html
+    │   │   └── calendario.html
+    │   ├── admin.py              # Configuração dos modelos no painel administrativo
+    │   ├── apps.py               # Configuração da aplicação `saude`
+    │   ├── forms.py              # Formulários exibidos pelas páginas
+    │   ├── models.py             # Definição das tabelas e regras dos dados
+    │   ├── tests.py              # Testes automatizados da aplicação
+    │   ├── urls.py               # Rotas específicas do app `saude`
+    │   ├── utils.py              # Geração e recálculo automático das vacinas
+    │   └── views.py              # Processamento das requisições e das páginas
+    └── suino/                    # Configuração principal do projeto Django
+        ├── settings.py           # Configurações do Django e do banco
+        ├── urls.py               # Rotas principais, login e painel administrativo
+        ├── asgi.py               # Ponto de entrada para servidores ASGI
+        └── wsgi.py               # Ponto de entrada para servidores WSGI
+```
+
+### Arquivos principais
+
+- **`models.py`**: define os modelos `Animal`, `PlanoVacina`, `DoseVacina` e `EventoSanitario`, além dos vínculos entre espécies, doses e registros sanitários.
+- **`views.py`**: concentra as telas e ações da aplicação, como cadastrar e listar animais, alterar status, registrar vacinas e fornecer os eventos do calendário.
+- **`forms.py`**: contém os formulários de animais, perfil, alteração de senha, status e registro da aplicação de vacinas.
+- **`utils.py`**: gera o calendário de vacinação dos animais e recalcula as doses seguintes após uma aplicação realizada.
+- **`urls.py`** (dentro de `saude/`): associa os endereços às páginas e à API de eventos sanitários.
+- **`admin.py`**: personaliza o painel administrativo para cadastro das vacinas e seus planos de dose.
+- **`settings.py`**: configura banco SQLite, idioma, segurança, autenticação, arquivos enviados e aplicações Django.
+- **`manage.py`**: permite executar servidor, migrações, testes e outros comandos administrativos.
+- **`migrations/`**: registra a evolução das tabelas do banco e contém a criação e ajuste dos modelos.
+- **`templates/saude/`**: contém as páginas HTML; `base.html` define o layout compartilhado e os demais arquivos representam telas específicas. Não há necessidade de detalhar cada template individualmente.
+- **`media/animais/`**: mantém os arquivos enviados pela aplicação, como fotos vinculadas aos animais.
+
 ## Cadastro de vacinas
 
 O acesso e edição do banco de dados das vacinas é separado do sistema e feito exclusivamente por administradores.
